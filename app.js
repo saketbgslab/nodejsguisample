@@ -1,15 +1,13 @@
 var express = require('express');
-var bodyParser = require('body-parser');
-var templateController = require('templateController');
+
+var tempController = require('./controller/templateController');
 
 var app = express();
 app.set('view engine', 'ejs');
 
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
 app.listen(3000);
 
-
-templateController(app);
+tempController.templateController(app);
 
 
 /*
