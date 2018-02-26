@@ -6,18 +6,31 @@
     
     <body>
         <h1><%= topicHead %></h1>
-        <form name="form1" method="POST" action="/student/add">
+        <form name="form1" method="POST" action="/deploy-template">
             <table>
+                <tr>
+                    <td>Subscriptions</td>
+                    <td>
+                        <select  name="subscriptionid" id="subscriptionsSelect">
+                            <optgroup >
+                                <% parameters['subscriptions'].forEach(function(val){ %>
+                                <option value="<%= val.subscriptionId %>"><%= val.displayName %></option>
+                                <% }) %>
+                            </optgroup>
+                        </select>
+                    </td>    
+                </tr>
+                
                 <tr>
                     <td>Resource Group</td>
                     <td>
-                            <select  name="resourceGroups">
-                                <optgroup >
-                                    <% parameters['resourceGroups'].forEach(function(val){ %>
-                                    <option value="<%= val.name %>"><%= val.name %></option>
-                                    <% }) %>
-                                </optgroup>
-                            </select>
+                        <select  name="resourceGroupName" id="resourceGroupsSelect">
+                            <optgroup >
+                                <% parameters['resourceGroups'].forEach(function(val){ %>
+                                <option value="<%= val.name %>"><%= val.name %></option>
+                                <% }) %>
+                            </optgroup>
+                        </select>
                     </td>    
                 </tr>       
                 <tr>
@@ -82,10 +95,20 @@
                     <td><input type="radio" name="storageAccNewOrExisting" id="newSaRadio" value="new" checked="checked"> New </td>
                     <td><input type="radio" name="storageAccNewOrExisting" id="existSaRadio" value="existing"> Existing</td>
                 </tr>
+
+                <tr id="storageAccounts" >
+                    <td>storageAccounts</td>
+                    <td>
+                        <select  name="storageAccountName" id="storageAccountsSelect">
+                            
+                        </select>
+                    </td>
+                </tr>
+
             
                 <tr id="storageAccountName" >
                     <td id="storageAccountNameLabel">storageAccountName</td>
-                    <td><input type="text" name="storageAccountName" value="VALIDATE ME" ></td>
+                    <td><input type="text" id="storageAccountNameText" name="storageAccountName" value="VALIDATE ME" ></td>
                     </tr>
             
                 <tr id="storageAccountkind">
@@ -120,12 +143,13 @@
                     <td>
                         <select  name="nodeVmSize" id="nodeVmSizeSelect">
                             <optgroup >
-                                <% parameters['resourceGroups'].forEach(function(val){ %>
+                                <% parameters['vmSizeList'].forEach(function(val){ %>
                                 <option value="<%= val.name %>"><%= val.name %></option>
                                 <% }) %>
                             </optgroup>
                         </select>
                     </td>
+                    <td>  <button type="button" id="vmSizeRefresh">Refresh List</button>  </td>
                     </tr>
             
                 <tr>
@@ -140,6 +164,7 @@
         </form>   
     </body>
 </html>
+
 <%
 function getDefaultValue(key){
     if(parameters[key].defaultValue == 'undefined'){
@@ -152,38 +177,120 @@ function getDefaultValue(key){
 
 <script>
 $(document).ready(function(){
+    $("#storageAccounts").hide();
+
+    subscriptionsAjax();
+    
+    $("#locationSelect").change(storageAjax);
+    $("#subscriptionsSelect").change(subscriptionsAjax);
+    $("#storageAccountNameText").change(accountNameValidateAjax)
 
     $("#existSaRadio").on('change', function(e){ 
         $("#storageAccountType").hide();
         $("#storageAccountkind").hide();
         $("#storageAccountName").hide();
-        var mydata = {};
-        mydata.mykey = "myvalue";
+        $("#storageAccounts").show();
 
-        myresponse = $.ajax({
-        type: 'POST',
-        url: '/resource-groups-list',
-        dataType: 'json',
-        data: mydata,
-        success: function(result) {
-            console.log(result);
-            var option = '';
-            for (var i=0;i<result.length;i++){
-            option += '<option value="'+ result[i].name + '">' + result[i].name + '</option>';
-            }
-            $("#nodeVmSizeSelect").empty();
-            $("#nodeVmSizeSelect").append(option);
-        }
-      }).responseJSON;
-
-           
-      return false;
+        storageAjax();
     });
 
     $("#newSaRadio").click(function(){
         $("#storageAccountType").show();
         $("#storageAccountkind").show();
         $("#storageAccountName").show();
+        $("#storageAccounts").hide();
     });
 });
+
+
+//--------------------AJAX CALLS--------------------------
+
+function accountNameValidateAjax(){
+
+    accName = $("#storageAccountNameText").val();
+    console.log('Entered storage account name is:  ' + accName);
+    var account = {};
+    account.name = accName;
+
+    validateRes = $.ajax({
+        type: 'POST',
+        url: '/validate-acc-name',
+        dataType: 'json',
+        data: account,
+        success: function(result) {
+            console.log(result);
+            if(result.nameAvailable){
+
+            } else {
+                alert(result.message);
+            }
+        }
+      }).responseJSON;
+
+    return false
+}
+
+
+function subscriptionsAjax(){
+    subscriptionId = $("#subscriptionsSelect").val();
+        console.log('selected subscription id from drop down:  ' + subscriptionId);
+        var subscription = {};
+        subscription.subscriptionId = subscriptionId;
+
+
+        resourceGroups = $.ajax({
+        type: 'POST',
+        url: '/resource-groups-list',
+        dataType: 'json',
+        data: subscription,
+        success: function(result) {
+            console.log(result);
+           
+            //fill resource groups list
+            var option = '';
+            for (var i=0;i<result.resourceGroups.length;i++){
+            option += '<option value="'+ result.resourceGroups[i].name + '">' + result.resourceGroups[i].name + '</option>';
+            }
+            $("#resourceGroupsSelect").empty();
+            $("#resourceGroupsSelect").append(option);
+
+            //fill Locations list
+            option = '';
+            for (var i=0;i<result.locationsList.length;i++){
+            option += '<option value="'+ result.locationsList[i].name + '">' + result.locationsList[i].displayName + '</option>';
+            }
+            $("#locationSelect").empty();
+            $("#locationSelect").append(option);            
+        }
+      }).responseJSON;
+      return false;
+}
+
+ //------------AJAX CALL FOR STORAGE ACCOUNTS----------------
+function storageAjax(){
+
+         locName = $("#locationSelect").val();
+        console.log('selected location from drop down:  ' + locName);
+        var locations = {};
+        locations.name = locName;
+
+        storageAccounts = $.ajax({
+        type: 'POST',
+        url: '/storage-account-list',
+        dataType: 'json',
+        data: locations,
+        success: function(result) {
+            console.log(result);
+            //fill storage account list
+            var option = '';
+            for (var i=0;i<result.length;i++){
+            option += '<option value="'+ result[i].id + '">' + result[i].name + '</option>';
+            }
+            $("#storageAccountsSelect").empty();
+            $("#storageAccountsSelect").append(option);    
+        }
+      }).responseJSON;
+      return false;
+}
+
 </script>

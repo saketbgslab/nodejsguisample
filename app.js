@@ -4,7 +4,7 @@ var tempController = require('./controller/templateController');
 
 var app = express();
 app.set('view engine', 'ejs');
-
+//app.use
 app.listen(3000);
 
 tempController.templateController(app);
