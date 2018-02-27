@@ -1,8 +1,8 @@
 <html>
     <head>
         <title> Cluster Form </title>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-      </head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>    
+    </head>
     
     <body>
         <h1><%= topicHead %></h1>
@@ -111,32 +111,7 @@
                     <td><input type="text" id="storageAccountNameText" name="storageAccountName" value="VALIDATE ME" ></td>
                     </tr>
             
-                <tr id="storageAccountkind">
-                    <td id="storageAccountkindLabel">storageAccountkind</td>
-                    <td>
-                        <select  name="storageAccountkind">
-                            <optgroup >
-                                <% parameters['storageAccountkind'].allowedValues.forEach(function(val){ %>
-                                <option value="<%= val %>"><%= val %></option>
-                                <% }) %>
-                            </optgroup>
-                        </select>
-                    </td>    
-                    
-                </tr>
             
-                <tr  id="storageAccountType">
-                    <td id="storageAccountTypeLabel" >storageAccountType</td>
-                    <td>
-                        <select  name="selectpicker">
-                            <optgroup >
-                                <% parameters['storageAccountType'].allowedValues.forEach(function(allowedValues){ %>
-                                <option value="<%= allowedValues %>"><%= allowedValues %></option>
-                                <% }) %>
-                            </optgroup>
-                        </select>
-                    </td>    
-                </tr>
             
                 <tr>
                     <td>nodeVmSize</td>
